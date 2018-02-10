@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+
+package grpc_service;
+
+// The greeting service definition.
+service WebRequestService {
+    // Sends a greeting
+    rpc Anaylse (WebRequest) returns (GeneralResponse) {}
+
+}
+
+// The request message containing the user's name.
+message WebRequest {
+    string RemoteIPAddress = 1;
+    string TargetHost = 2;
+    string UrlPath = 3;
+    string UrlParams = 4;
+    string UrlMethod = 5;
+    map<string,string> Headers = 6;
+    google.protobuf.Any Body = 7;
+    bytes Raw = 8;
+    google.protobuf.Timestamp time = 9;
+
+}
+
+// The response message containing the greetings
+message GeneralResponse {
+    bool success = 1;
+}
+
+
