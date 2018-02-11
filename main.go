@@ -12,9 +12,13 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/umsu2/bot_analyszer/bot_analyzer"
+	"github.com/umsu2/bot_analyszer/grpc_client"
+	"google.golang.org/grpc"
 )
 
 //go:generate protoc -I ./grpc_service --go_out=plugins=grpc:./grpc_service ./grpc_service/grpc_service.proto
+
+const gRPC_Service_Address = "localhost:50051"
 
 func main() {
 	var (
@@ -28,7 +32,12 @@ func main() {
 	// todo: instrumenting code
 	var sv bot_analyzer.GateWayService
 
-	sv = bot_analyzer.NewGatewayService()
+	conn, err := grpc.Dial(gRPC_Service_Address, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		logger.Log("error", "did not connect: %v", err)
+	}
+	grcpClient := grpc_client.NewGRPCClient(conn, logger)
+	sv = bot_analyzer.NewGatewayService(grcpClient)
 	sv = bot_analyzer.LoggingMiddleware(logger)(sv)
 
 	handler := httptransport.NewServer(
@@ -46,8 +55,8 @@ func main() {
 func makeEndpoint(sv bot_analyzer.GateWayService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(*http.Request)
-		err := sv.Analyze(ctx, req)
-		return nil, err
+		resp, err := sv.Analyze(ctx, req)
+		return resp, err
 	}
 }
 

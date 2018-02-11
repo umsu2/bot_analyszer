@@ -4,20 +4,27 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+
+	"github.com/umsu2/bot_analyszer/grpc_client"
+	"github.com/umsu2/bot_analyszer/grpc_service"
+	"github.com/umsu2/bot_analyszer/models"
 )
 
 type gatewayService struct {
+	gRPCClient grpc_client.GRPCAnalyzeService
 }
 
 type GateWayService interface {
-	Analyze(context.Context, *http.Request) error
+	Analyze(context.Context, *http.Request) (grpc_service.GeneralResponse, error)
 }
 
-func NewGatewayService() gatewayService {
-	return gatewayService{}
+func NewGatewayService(gRPCClient grpc_client.GRPCAnalyzeService) gatewayService {
+	return gatewayService{
+		gRPCClient: gRPCClient,
+	}
 }
 
-func (s gatewayService) Analyze(ctx context.Context, r *http.Request) error {
+func (s gatewayService) Analyze(ctx context.Context, r *http.Request) (grpc_service.GeneralResponse, error) {
 	fmt.Printf("analyze stuff: %+v \n", r)
 	// get ip address etc. find routes etc.
 	//bytes, err := httputil.DumpRequest(r, true)
@@ -28,13 +35,10 @@ func (s gatewayService) Analyze(ctx context.Context, r *http.Request) error {
 	fmt.Printf("%+v \n", r.Host)         // host it tries to connect
 	fmt.Printf("%+v \n", r.RemoteAddr)   // addresss of requester
 	fmt.Printf("%+v \n", r.Header)       // header, which is map of strings
+	req := models.AppgatewayWebRequest{}
 
-	// pass the request data, and body into the rpc methods
-	return s.next.Analyze(ctx, r)
-}
+	return s.gRPCClient.Analyze(ctx, req)
 
-type AppgatewayWebRequest struct {
-	IPAddress string
 }
 
 type GateServiceMiddleware func(GateWayService) GateWayService

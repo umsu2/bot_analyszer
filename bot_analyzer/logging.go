@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/go-kit/kit/log"
+	"github.com/umsu2/bot_analyszer/grpc_service"
 )
 
 type logmw struct {
@@ -23,7 +24,7 @@ func LoggingMiddleware(logger log.Logger) GateServiceMiddleware {
 	}
 }
 
-func (mw logmw) Analyze(ctx context.Context, s *http.Request) error {
+func (mw logmw) Analyze(ctx context.Context, s *http.Request) (grpc_service.GeneralResponse, error) {
 	defer func(begin time.Time) {
 		_ = mw.logger.Log(
 			"method", "analyze",
